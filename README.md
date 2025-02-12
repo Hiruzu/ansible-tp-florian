@@ -215,3 +215,182 @@ target01 | SUCCESS => {
 Validé ! 
 
 
+## Atelier 6 - Exercice
+Dans le dossier atelier 06 : 
+```
+vagrant up
+vagrant ssh control
+```
+Comme pour l'exercice précédent, on modifie "/etc/hosts" pour pouvoir appeler les machines par leurs noms :
+```
+sudo nano /etc/hosts
+```
+contenu : 
+```
+127.0.0.1 localhost
+127.0.1.1 vagrant
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+127.0.2.1 control control
+
+192.168.56.20 target01
+192.168.56.30 target02
+192.168.56.40 target03
+```
+
+Même méthode qu'a l'exercice précédent pour joindre les VMs via ssh : 
+```
+vagrant@control:~$ ssh-keyscan -t rsa target01 target02 target03 >> .ssh/known_hosts
+vagrant@control:~$ ssh-keygen
+vagrant@control:~$ ssh-copy-id vagrant@target01
+vagrant@control:~$ ssh-copy-id vagrant@target02
+vagrant@control:~$ ssh-copy-id vagrant@target03
+```
+Installation Ansible et test ping sans configuration.
+```
+vagrant@control:~$ sudo apt update
+vagrant@control:~$ sudo apt install ansible
+vagrant@control:~$ ansible all -i target01,target02,target03 -m ping
+target03 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+target02 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+target01 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+création et test du dossier monprojet avec le fichier ansible.cfg
+```
+vagrant@control:~$ mkdir monprojet
+vagrant@control:~$ cd monprojet/
+vagrant@control:~/monprojet$ touch ansible.cfg
+vagrant@control:~/monprojet$ ansible --version
+ansible 2.10.8
+  config file = /home/vagrant/monprojet/ansible.cfg
+  configured module search path = ['/home/vagrant/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3/dist-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 3.10.12 (main, Mar 22 2024, 16:50:05) [GCC 11.4.0]
+```
+Le fichier est bien prit en compte ! 
+
+Création de l'inventaire et de la journalisation, dans le fichier ansible.cfg : 
+```
+[defaults]
+inventory = ./hosts
+log_path =  ./logs/ansible.log
+```
+Création du fichier hosts (avec le groupe testlab et l'utilisateur vagrant pour la connection) : 
+```
+vagrant@control:~/monprojet$ touch hosts
+```
+```
+[testlab]
+target01
+target02
+target03
+
+[testlab:vars]
+ansible_user=vagrant
+```
+
+Création et test du fichier de journalisation : 
+```
+vagrant@control:~/monprojet$ mkdir logs
+vagrant@control:~/monprojet$ ansible all -m ping
+target02 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+target03 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+target01 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+```
+```
+vagrant@control:~/monprojet$ cat logs/ansible.log
+
+2025-02-12 15:36:13,571 p=4420 u=vagrant n=ansible | target02 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+2025-02-12 15:36:13,574 p=4420 u=vagrant n=ansible | target03 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+2025-02-12 15:36:13,575 p=4420 u=vagrant n=ansible | target01 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+
+```
+Nouveau fichier hosts pour l'élévation des privilèges : 
+```
+[testlab]
+target01
+target02
+target03
+
+[testlab:vars]
+ansible_user=vagrant
+ansible_become=yes
+```
+Vérification et destruction des Vms : 
+
+```
+vagrant@control:~/monprojet$ ansible all -a "head -n 1 /etc/shadow"
+target03 | CHANGED | rc=0 >>
+root:*:19769:0:99999:7:::
+target01 | CHANGED | rc=0 >>
+root:*:19769:0:99999:7:::
+target02 | CHANGED | rc=0 >>
+root:*:19769:0:99999:7:::
+vagrant@control:~/monprojet$ exit
+logout
+Connection to 127.0.0.1 closed.
+[ema@localhost:atelier-06] $ vagrant destroy -f 
+
+```
+
