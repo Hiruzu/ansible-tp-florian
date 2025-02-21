@@ -542,3 +542,92 @@ Un deuxième playbook apache-rocky.yml qui installe Apache sur l’hôte rocky a
 </html>
 ```
 
+Article 13 - Exercice
+
+fichier kernel.yml :
+
+```
+---
+- hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Get kernel info
+      command: uname -a
+      changed_when: false
+      register: kernel_info
+
+    - debug:
+        msg: "{{ kernel_info.stdout }}"
+```
+
+fichier kernel_var.yml
+```
+---
+- hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Get kernel info
+      command: uname -a
+      changed_when: false
+      register: kernel_info
+
+    - debug:
+        var: kernel_info.stdout
+```
+
+fichier packages.yml
+```
+---
+- hosts: rocky, suse
+  gather_facts: false
+
+  tasks:
+    - name: Get total number of installed RPM packages
+      command: rpm -qa | wc -l
+      changed_when: false
+      register: rpm_count
+
+    - debug:
+        msg: "Total number of RPM packages installed: {{ rpm_count.stdout }}"
+```
+
+Article 14 - Exercice
+
+pkg-info.yml
+```
+---
+- hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Display package manager
+      debug:
+        msg: "The package manager on {{ inventory_hostname }} is {{ ansible_pkg_mgr }}"
+```
+
+python-info.yml
+```
+---
+- hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Display Python version
+      debug:
+        msg: "The Python version on {{ inventory_hostname }} is {{ ansible_python_version }}"
+```
+
+dns-info.yml
+```
+---
+- hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Display DNS servers
+      debug:
+        msg: "The DNS servers on {{ inventory_hostname }} are {{ ansible_dns.nameservers }}"
+```
+
