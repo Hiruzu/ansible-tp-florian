@@ -394,3 +394,151 @@ Connection to 127.0.0.1 closed.
 
 ```
 
+Atelier 8 - Exercice
+
+
+Installez successivement les paquets tree, git et nmap sur toutes les cibles.
+```
+ansible all -m package -a "name=tree"
+ansible all -m package -a "name=git"
+ansible all -m package -a "name=nmap"
+```
+
+Désinstallez successivement ces trois paquets en utilisant le paramètre supplémentaire state=absent.
+```
+ansible all -m package -a "name=tree state=absent"
+ansible all -m package -a "name=git state=absent"
+ansible all -m package -a "name=nmap state=absent"
+```
+
+
+Atelier 10 - Exercice
+Exercice
+Placez-vous dans le répertoire du dixième atelier pratique :
+
+```
+cd ~/formation-ansible/atelier-10
+```
+
+Démarrez les VM :
+Connectez-vous au Control Host :
+```
+vagrant up
+vagrant ssh ansible
+```
+
+Rendez-vous dans le répertoire du projet :
+
+```
+cd ansible/projets/ema/
+direnv: loading ~/ansible/projets/ema/.envrc
+direnv: export +ANSIBLE_CONFIG
+$ ls -l
+total 8
+-rw-r--r--. 1 vagrant vagrant  65 Sep 19 14:26 ansible.cfg
+-rw-r--r--. 1 vagrant vagrant 128 Sep 19 14:26 inventory
+drwxr-xr-x. 2 vagrant vagrant   6 Sep 19 14:26 playbooks
+
+Un premier playbook apache-debian.yml qui installe Apache sur l’hôte debian avec une page personnalisée Apache web server running on Debian Linux.
+
+[vagrant@ansible playbooks]$ cat apache-debian.yml 
+---
+- hosts: debian
+
+  tasks: 
+
+    - name: Update cache information
+      apt:
+        update_cache: true
+
+    - name: install apache
+      apt:
+        name: apache2
+
+    - name: start and enable apache2 service
+      service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: web page
+      copy:
+        dest: /var/www/html/index.html
+        mode: 0644
+        content : |
+          <!doctype html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Test</title>
+            </head>
+            <body>
+              <h1>DEBIAN WEB SERVER CONFIGURED BY ANSIBLE</h1>
+            </body>
+          </html>
+```
+
+```
+[vagrant@ansible playbooks]$ curl debian
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+      <h1>DEBIAN WEB SERVER CONFIGURED BY ANSIBLE</h1>
+  </body>
+</html>
+```
+
+Un deuxième playbook apache-rocky.yml qui installe Apache sur l’hôte rocky avec une page personnalisée Apache web server running on Rocky Linux.
+```
+[vagrant@ansible playbooks]$ cat apache-rocky.yml 
+---
+- hosts: rocky
+  tasks: 
+    - name: install httpd
+      dnf:
+        name: httpd
+        state: latest
+
+    - name: start and enable httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: web page
+      copy:
+        dest: /var/www/html/index.html
+        mode: 0644
+        content : |
+         <!doctype html>
+         <html>
+           <head>
+             <meta charset="utf-8">
+             <title>Test</title>
+           </head>
+           <body>
+               <h1>ROCKY WEB SERVER CONFIGURED BY ANSIBLE</h1>
+           </body>
+         </html>
+```
+
+```
+[vagrant@ansible playbooks]$ curl rocky
+```
+```
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Test</title>
+  </head>
+  <body>
+      <h1>ROCKY WEB SERVER CONFIGURED BY ANSIBLE</h1>
+  </body>
+</html>
+```
+
